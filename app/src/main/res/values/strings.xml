@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">AndroidSSHCommandSender</string>
+    <string name="test_string">HELLO WORLD</string>
 </resources>
