@@ -10,6 +10,7 @@ data class SettingsItem (
     @ColumnInfo(name = "profileName") var profileName: String,
     @ColumnInfo(name = "address") var address: String,
     @ColumnInfo(name = "username") var username: String,
-    @ColumnInfo(name = "password") var password: String,
+    @ColumnInfo(name = "password") var password: ByteArray,
+    @ColumnInfo(name = "initializationVector") var initializationVector: ByteArray,
     @ColumnInfo(name = "command") var command: String
 )

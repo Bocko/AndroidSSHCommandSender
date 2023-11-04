@@ -6,6 +6,9 @@ import com.lgbotond.androidsshcommandsender.Xtensions.fadeOut
 import com.lgbotond.androidsshcommandsender.data.SettingsDatabase
 import com.lgbotond.androidsshcommandsender.data.SettingsItem
 import com.lgbotond.androidsshcommandsender.databinding.ActivityMainBinding
+import com.lgbotond.androidsshcommandsender.util.cryptoManager.CryptoManager
+import com.lgbotond.androidsshcommandsender.util.Utilities.validateIpAddress
+import com.lgbotond.androidsshcommandsender.util.cryptoManager.EncryptedBytesContainer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,8 +23,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     private lateinit var binding: ActivityMainBinding
     private lateinit var database: SettingsDatabase
 
-    private val ipv4AddressCheck = "^(\\d{1,3}\\.){3}\\d{1,3}\$".toRegex()
-    private val ipv6AddressCheck = "^([\\da-f]{1,4}:){7}[\\da-f]{1,4}\$/i".toRegex()
+    private val cryptoManager = CryptoManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +37,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     }
 
     private fun sendEvent() {
-        if(validateAddress((binding.etAddress.text.toString()))) {
+        if(validateIpAddress((binding.etAddress.text.toString()))) {
             binding.tvStatus.setTextColor(getColor(R.color.success))
             binding.tvStatus.text = "SUCCESS"
             saveSettings()
@@ -49,16 +51,18 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     private fun saveSettings() = launch {
         withContext(Dispatchers.IO) {
-            val newSettings = SettingsItem(
-                profileName = "base",
+            val encryptedBytesContainer = encryptPassword(binding.etPassword.text.toString().encodeToByteArray())
+            val newSettings = SettingsItem (
+                profileName = BASE_PROFILE_NAME,
                 address = binding.etAddress.text.toString(),
                 username = binding.etUsername.text.toString(),
-                password = hashPassword(binding.etPassword.text.toString()),
-                command = binding.etCommand.text.toString())
-
+                password = encryptedBytesContainer.encryptedBytes,
+                initializationVector = encryptedBytesContainer.initializationVector,
+                command = binding.etCommand.text.toString()
+            )
             val settingsList = database.settingsItemDao().getAll()
             if(settingsList.isNotEmpty()) {
-                newSettings.id = 1
+                newSettings.id = BASE_PROFILE_DB_INDEX
                 database.settingsItemDao().update(newSettings)
             } else {
                 database.settingsItemDao().insert(newSettings)
@@ -67,48 +71,28 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     }
 
     private fun loadSettings() = launch {
-        val settings = withContext(Dispatchers.IO){
+        val settings = withContext(Dispatchers.IO) {
             database.settingsItemDao().getAll()
         }
 
         if(settings.isNotEmpty()) {
+            val encryptedBytesContainer = EncryptedBytesContainer(settings[0].password,settings[0].initializationVector)
+            val password = decryptPassword(encryptedBytesContainer)
 
             binding.etAddress.setText(settings[0].address)
             binding.etUsername.setText(settings[0].username)
-            binding.etPassword.setText(unHashPassword(settings[0].password))
+            binding.etPassword.setText(password)
             binding.etCommand.setText(settings[0].command)
         }
     }
 
-    private fun hashPassword(password: String) : String {
-        //TODO: this
-        return password
+    private fun encryptPassword(password: ByteArray) : EncryptedBytesContainer {
+        return cryptoManager.encrypt(password)
     }
 
-    private fun unHashPassword(hashedPassword: String) : String {
-        //TODO: this
-        return hashedPassword
+    private fun decryptPassword(encryptedBytesContainer: EncryptedBytesContainer) : String {
+        return cryptoManager.decrypt(encryptedBytesContainer).decodeToString()
     }
 
-    private fun validateAddress(address: String) : Boolean {
-        if (ipv4AddressCheck.matches(address)) {
-            val parts = address.split('.')
-            for (part in parts) {
-                if (part.toInt() > 255) {
-                    return false
-                }
-            }
-            return true
-        }
-        if (ipv6AddressCheck.matches(address)) {
-            val parts = address.split(':')
-            for (part in parts) {
-                if (part.length > 4) {
-                    return false
-                }
-            }
-            return true
-        }
-        return false
-    }
+
 }
