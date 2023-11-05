@@ -2,11 +2,20 @@
     <string name="app_name">AndroidSSHCommandSender</string>
     <string name="address_label">Endpoint address:</string>
     <string name="address_hint">xxx.xxx.xxx.xxx</string>
+    <string name="port_label">SSH port:</string>
+    <string name="port_hint">22</string>
     <string name="username_label">Username:</string>
     <string name="username_hint">admin</string>
     <string name="password_label">Password:</string>
     <string name="password_hint">********</string>
-    <string name="commands_label">Command to send:</string>
+    <string name="commands_label">Command:</string>
     <string name="commands_hint">sudo shutdown</string>
     <string name="send_btn">Send Command</string>
+    <string name="general_error">INPUT FIELD ERROR</string>
+    <string name="address_error_invalid">INVALID ADDRESS</string>
+    <string name="address_error_empty">ADDRESS REQUIRED</string>
+    <string name="port_error_empty">PORT REQUIRED</string>
+    <string name="username_error_empty">USERNAME REQUIRED</string>
+    <string name="password_error_empty">PASSWORD REQUIRED</string>
+    <string name="command_error_empty">COMMAND REQUIRED</string>
 </resources>

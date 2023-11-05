@@ -9,6 +9,7 @@ data class SettingsItem (
     @ColumnInfo(name = "id") @PrimaryKey(autoGenerate = true) var id: Long = 0,
     @ColumnInfo(name = "profileName") var profileName: String,
     @ColumnInfo(name = "address") var address: String,
+    @ColumnInfo(name = "port") var port: Int,
     @ColumnInfo(name = "username") var username: String,
     @ColumnInfo(name = "password") var password: ByteArray,
     @ColumnInfo(name = "initializationVector") var initializationVector: ByteArray,

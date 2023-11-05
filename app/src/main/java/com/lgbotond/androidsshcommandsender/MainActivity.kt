@@ -37,16 +37,9 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     }
 
     private fun sendEvent() {
-        if(validateIpAddress((binding.etAddress.text.toString()))) {
-            binding.tvStatus.setTextColor(getColor(R.color.success))
-            binding.tvStatus.text = "SUCCESS"
+        if(!checkInputFields()) {
             saveSettings()
-        } else {
-            binding.tvStatus.setTextColor(getColor(R.color.error))
-            binding.tvStatus.text = "INVALID ADDRESS"
         }
-
-        binding.tvStatus.fadeOut()
     }
 
     private fun saveSettings() = launch {
@@ -55,6 +48,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             val newSettings = SettingsItem (
                 profileName = BASE_PROFILE_NAME,
                 address = binding.etAddress.text.toString(),
+                port = binding.etPort.text.toString().toInt(),
                 username = binding.etUsername.text.toString(),
                 password = encryptedBytesContainer.encryptedBytes,
                 initializationVector = encryptedBytesContainer.initializationVector,
@@ -80,6 +74,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             val password = decryptPassword(encryptedBytesContainer)
 
             binding.etAddress.setText(settings[0].address)
+            binding.etPort.setText(settings[0].port.toString())
             binding.etUsername.setText(settings[0].username)
             binding.etPassword.setText(password)
             binding.etCommand.setText(settings[0].command)
@@ -94,5 +89,48 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         return cryptoManager.decrypt(encryptedBytesContainer).decodeToString()
     }
 
+    private fun checkInputFields() : Boolean {
+        var hasError = false
 
+        if (binding.etAddress.text.isEmpty()) {
+            binding.etAddress.error = getString(R.string.address_error_empty)
+            hasError = true
+        } else if (!validateIpAddress((binding.etAddress.text.toString()))) {
+            binding.etAddress.error = getString(R.string.address_error_invalid)
+            hasError = true
+        }
+
+        if(binding.etAddress.text.isEmpty()) {
+            binding.etAddress.error = getString(R.string.address_error_empty)
+            hasError = true
+        }
+
+        if(binding.etPort.text.isEmpty()) {
+            binding.etPort.error = getString(R.string.port_error_empty)
+            hasError = true
+        }
+
+        if(binding.etUsername.text.isEmpty()) {
+            binding.etUsername.error = getString(R.string.username_error_empty)
+            hasError = true
+        }
+
+        if(binding.etPassword.text.isEmpty()) {
+            binding.etPassword.error = getString(R.string.password_error_empty)
+            hasError = true
+        }
+
+        if(binding.etCommand.text.isEmpty()) {
+            binding.etCommand.error = getString(R.string.command_error_empty)
+            hasError = true
+        }
+
+        if(hasError) {
+            binding.tvStatus.text = getString(R.string.general_error)
+            binding.tvStatus.setTextColor(getColor(R.color.error))
+            binding.tvStatus.fadeOut()
+        }
+
+        return hasError
+    }
 }
