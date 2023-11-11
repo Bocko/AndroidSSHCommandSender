@@ -1,18 +1,16 @@
 package com.lgbotond.androidsshcommandsender
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.lgbotond.androidsshcommandsender.Xtensions.fadeOut
-import com.lgbotond.androidsshcommandsender.data.SettingsDatabase
-import com.lgbotond.androidsshcommandsender.data.SettingsItem
 import com.lgbotond.androidsshcommandsender.databinding.ActivityMainBinding
-import com.lgbotond.androidsshcommandsender.util.cryptoManager.CryptoManager
 import com.lgbotond.androidsshcommandsender.util.Utilities.validateIpAddress
-import com.lgbotond.androidsshcommandsender.util.cryptoManager.EncryptedBytesContainer
+import com.lgbotond.androidsshcommandsender.util.saveManager.SaveManager
+import com.lgbotond.androidsshcommandsender.util.sshManager.SSHManager
+import com.lgbotond.androidsshcommandsender.util.xtensions.fadeOut
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
 class MainActivity : AppCompatActivity(), CoroutineScope {
@@ -21,72 +19,46 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         get() = Dispatchers.Main
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var database: SettingsDatabase
 
-    private val cryptoManager = CryptoManager()
+    private lateinit var saveManager : SaveManager
+    private val sshManager = SSHManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        database = SettingsDatabase.getDatabase(applicationContext)
+        saveManager = SaveManager(binding.root.context)
         binding.btnSend.setOnClickListener { sendEvent() }
 
-        loadSettings()
+        saveManager.loadSettings(
+            binding.etAddress,
+            binding.etPort,
+            binding.etUsername,
+            binding.etPassword,
+            binding.etCommand)
     }
 
     private fun sendEvent() {
         if(!checkInputFields()) {
-            saveSettings()
+            saveManager.saveSettings(
+                binding.etAddress.text.toString(),
+                binding.etPort.text.toString().toInt(),
+                binding.etUsername.text.toString(),
+                binding.etPassword.text.toString(),
+                binding.etCommand.text.toString())
+            connectClientAndSendCommand()
         }
     }
 
-    private fun saveSettings() = launch {
-        withContext(Dispatchers.IO) {
-            val encryptedBytesContainer = encryptPassword(binding.etPassword.text.toString().encodeToByteArray())
-            val newSettings = SettingsItem (
-                profileName = BASE_PROFILE_NAME,
-                address = binding.etAddress.text.toString(),
-                port = binding.etPort.text.toString().toInt(),
-                username = binding.etUsername.text.toString(),
-                password = encryptedBytesContainer.encryptedBytes,
-                initializationVector = encryptedBytesContainer.initializationVector,
-                command = binding.etCommand.text.toString()
-            )
-            val settingsList = database.settingsItemDao().getAll()
-            if(settingsList.isNotEmpty()) {
-                newSettings.id = BASE_PROFILE_DB_INDEX
-                database.settingsItemDao().update(newSettings)
-            } else {
-                database.settingsItemDao().insert(newSettings)
-            }
-        }
-    }
-
-    private fun loadSettings() = launch {
-        val settings = withContext(Dispatchers.IO) {
-            database.settingsItemDao().getAll()
-        }
-
-        if(settings.isNotEmpty()) {
-            val encryptedBytesContainer = EncryptedBytesContainer(settings[0].password,settings[0].initializationVector)
-            val password = decryptPassword(encryptedBytesContainer)
-
-            binding.etAddress.setText(settings[0].address)
-            binding.etPort.setText(settings[0].port.toString())
-            binding.etUsername.setText(settings[0].username)
-            binding.etPassword.setText(password)
-            binding.etCommand.setText(settings[0].command)
-        }
-    }
-
-    private fun encryptPassword(password: ByteArray) : EncryptedBytesContainer {
-        return cryptoManager.encrypt(password)
-    }
-
-    private fun decryptPassword(encryptedBytesContainer: EncryptedBytesContainer) : String {
-        return cryptoManager.decrypt(encryptedBytesContainer).decodeToString()
+    private fun connectClientAndSendCommand() = launch(Dispatchers.IO) {
+        sshManager.sendCommand(
+            binding.etAddress.text.toString(),
+            binding.etPort.text.toString().toInt(),
+            binding.etUsername.text.toString(),
+            binding.etPassword.text.toString(),
+            binding.etCommand.text.toString())
+        Log.d("MAIN", sshManager.getOutputText())
     }
 
     private fun checkInputFields() : Boolean {

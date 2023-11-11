@@ -1,4 +1,4 @@
-package com.lgbotond.androidsshcommandsender.Xtensions
+package com.lgbotond.androidsshcommandsender.util.xtensions
 
 import android.view.View
 import android.view.animation.AlphaAnimation

@@ -1,8 +1,13 @@
 package com.lgbotond.androidsshcommandsender.data
 
 import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Entity
+import androidx.room.Insert
 import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Update
 
 @Entity(tableName = "settings")
 data class SettingsItem (
@@ -15,3 +20,15 @@ data class SettingsItem (
     @ColumnInfo(name = "initializationVector") var initializationVector: ByteArray,
     @ColumnInfo(name = "command") var command: String
 )
+
+@Dao
+interface SettingsItemDao {
+    @Query("SELECT * FROM settings")
+    suspend fun getAll(): List<SettingsItem>
+    @Insert
+    suspend fun insert(settingsItem: SettingsItem): Long
+    @Update
+    suspend fun update(settingsItem: SettingsItem)
+    @Delete
+    suspend fun delete(settingsItem: SettingsItem)
+}
