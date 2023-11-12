@@ -1,7 +1,6 @@
 package com.lgbotond.androidsshcommandsender
 
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.lgbotond.androidsshcommandsender.databinding.ActivityMainBinding
 import com.lgbotond.androidsshcommandsender.util.Utilities.validateIpAddress
@@ -11,6 +10,7 @@ import com.lgbotond.androidsshcommandsender.util.xtensions.fadeOut
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
 class MainActivity : AppCompatActivity(), CoroutineScope {
@@ -51,14 +51,16 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         }
     }
 
-    private fun connectClientAndSendCommand() = launch(Dispatchers.IO) {
-        sshManager.sendCommand(
-            binding.etAddress.text.toString(),
-            binding.etPort.text.toString().toInt(),
-            binding.etUsername.text.toString(),
-            binding.etPassword.text.toString(),
-            binding.etCommand.text.toString())
-        Log.d("MAIN", sshManager.getOutputText())
+    private fun connectClientAndSendCommand() = launch {
+        withContext(Dispatchers.IO) {
+            sshManager.sendCommand(
+                binding.etAddress.text.toString(),
+                binding.etPort.text.toString().toInt(),
+                binding.etUsername.text.toString(),
+                binding.etPassword.text.toString(),
+                binding.etCommand.text.toString())
+        }
+        binding.tvStatus.text = sshManager.getOutputText()
     }
 
     private fun checkInputFields() : Boolean {

@@ -18,4 +18,5 @@
     <string name="username_error_empty">USERNAME REQUIRED</string>
     <string name="password_error_empty">PASSWORD REQUIRED</string>
     <string name="command_error_empty">COMMAND REQUIRED</string>
+    <string name="output_label">Output:</string>
 </resources>
