@@ -1,6 +1,7 @@
 package com.lgbotond.androidsshcommandsender
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.lgbotond.androidsshcommandsender.databinding.ActivityMainBinding
 import com.lgbotond.androidsshcommandsender.util.Utilities.validateIpAddress
@@ -21,7 +22,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     private lateinit var binding: ActivityMainBinding
 
     private lateinit var saveManager : SaveManager
-    private val sshManager = SSHManager()
+    private lateinit var sshManager : SSHManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         setContentView(binding.root)
 
         saveManager = SaveManager(binding.root.context)
+        sshManager = SSHManager(binding.root.context)
         binding.btnSend.setOnClickListener { sendEvent() }
 
         saveManager.loadSettings(
@@ -52,8 +54,9 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     }
 
     private fun connectClientAndSendCommand() = launch {
+        var result: String
         withContext(Dispatchers.IO) {
-            sshManager.sendCommand(
+            result = sshManager.sendCommand(
                 binding.etAddress.text.toString(),
                 binding.etPort.text.toString().toInt(),
                 binding.etUsername.text.toString(),
@@ -61,6 +64,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                 binding.etCommand.text.toString())
         }
         binding.tvStatus.text = sshManager.getOutputText()
+        Toast.makeText(binding.root.context,result,Toast.LENGTH_SHORT).show()
     }
 
     private fun checkInputFields() : Boolean {
